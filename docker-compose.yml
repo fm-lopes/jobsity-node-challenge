@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  cache:
+    image: redis:6.2.10-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning
+  stock:
+    build: 
+      context: ./stock-service
+      dockerfile: Dockerfile
+    image: stock-service
+    depends_on:
+      - cache
+    environment:
+      REDIS_HOST: cache
+    links:
+      - cache
+    ports:
+      - 3002:3002
+  api:
+    build: 
+      context: ./api-service
+      dockerfile: Dockerfile
+    image: api-service
+    links:
+      - stock
+    environment:
+      STOCK_SERVICE: stock
+      JWT_SECRET: 628f442418665082a55814f21fe1b923
+    ports:
+      - 3001:3001
